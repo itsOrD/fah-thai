@@ -1,0 +1,57 @@
+/* Base styles: a light-touch reset plus the app frame. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+  min-height: 100dvh;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+a {
+  color: var(--neon-cyan);
+}
+
+:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Thai text always renders in the looped learning font. */
+:lang(th),
+.thai {
+  font-family: var(--font-thai);
+}

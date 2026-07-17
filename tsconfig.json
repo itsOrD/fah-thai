@@ -19,7 +19,9 @@
     "app/src/**/*.svelte",
     "app/sw.ts",
     "pipeline/**/*.ts",
+    "e2e/**/*.ts",
     "vite.config.ts",
+    "playwright.config.ts",
     "svelte.config.js"
   ]
 }

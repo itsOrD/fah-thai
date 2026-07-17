@@ -1,0 +1,39 @@
+# On-demand deploy of ANY ref to the /test/ environment — how spike branches
+# get onto a real iPhone before merging (e.g. spike/device-lab's merge gate
+# is an on-device pass). Never touches staging or production.
+name: Spike deploy to test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-spike:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: gh-pages-deploy
+      cancel-in-progress: false
+    environment:
+      name: test
+      url: https://itsord.github.io/fah-thai/test/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm test
+      - run: pnpm build
+      - name: Neutralize installability (non-prod)
+        run: rm -f dist/manifest.webmanifest
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages
+          target-folder: test
+          clean: true

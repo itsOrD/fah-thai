@@ -89,3 +89,50 @@ toolchain stumbles below). Main-session tokens only — no subagents. $0.
    permission in the same commit.
 
 ---
+
+## 2 · feat/cicd-pipeline + spike/device-lab (2026-07-17)
+
+**Spent**: ~2 h wall-clock across both branches plus one ~10-minute user
+device session (well under the ≤5-min-per-todo target when split across its
+two natural halves). $0 — pipeline, environments, and deploys all inside
+GitHub free tier.
+
+**Went well**
+
+- The promotion pipeline worked on its first full run (5m28s): identical
+  artifact SHA served by all three environments, prod-only installability
+  confirmed by the smoke gates themselves.
+- The device lab earned its existence in one session: it caught a real design
+  error (see below), confirmed the entire audio-capture architecture on the
+  target device, and settled the ChatGPT lane question with evidence that
+  contradicted parts of the researched expectations (`/voice` is broken in
+  practice despite being a registered universal link).
+- "Copy report → paste" honored the ≤5-minute user-todo rule; the user's
+  paste carried everything needed to write ADR-003/004.
+
+**Waste + root cause**
+
+- **"Run all" violated iOS's one-activation-per-gesture rule** — chained
+  interactive probes failed and confused the user (he thought the mic was
+  blocked when it had actually captured audio). Root cause: designed the
+  convenience button from desktop instincts, not from the platform's
+  permission model that the research itself had flagged.
+- Mic probe graded expected iOS constraint behavior as FAIL — a false alarm
+  that cost user trust in the report. Grading semantics must distinguish
+  "platform said no as documented" from "our bet failed".
+- workflow_dispatch registration requires the workflow on the default branch;
+  discovering this cost a branch restructure (soft-reset, split, force-push).
+- The spike deploy raced the main promotion pipeline for /test/ (concurrency
+  serialized them, but main's run overwrote the spike; re-dispatch needed).
+  Known now: after any main push, re-dispatch spikes.
+
+**Carry-forward rules**
+
+7. On iOS, one tap = one permission-consuming action. Design every batch
+   operation around that from the start.
+8. Probe/diagnostic UIs must grade against *expectations per platform*, not
+   absolutes — a FAIL badge must always mean "the plan is threatened".
+9. workflow_dispatch files land on the default branch first, in their own
+   commit, before the branch that needs them.
+
+---

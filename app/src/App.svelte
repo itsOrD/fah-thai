@@ -1,9 +1,16 @@
 <script lang="ts">
+  import type { Component } from 'svelte';
   import { fade } from 'svelte/transition';
   import TabBar from './shell/TabBar.svelte';
   import { router } from './shell/router.svelte';
   import type { RouteId } from './shell/routes';
   import ScreenScaffold from './ui/ScreenScaffold.svelte';
+  import LabScreen from './screens/lab/LabScreen.svelte';
+
+  /** Real screens; routes not present here fall back to the stub table. */
+  const SCREENS: Partial<Record<RouteId, Component>> = {
+    lab: LabScreen,
+  };
 
   /**
    * Stub metadata per route. Each feature branch replaces its entry with a
@@ -97,7 +104,12 @@
 <main>
   {#key router.route}
     <div class="screen" in:fade={{ duration: 140 }}>
-      <ScreenScaffold {...stub} />
+      {#if SCREENS[router.route]}
+        {@const Screen = SCREENS[router.route]!}
+        <Screen />
+      {:else}
+        <ScreenScaffold {...stub} />
+      {/if}
     </div>
   {/key}
 </main>

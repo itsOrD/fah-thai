@@ -1,6 +1,10 @@
-# CI seed (feat/scaffold): verify on every push/PR; deploy main to GitHub Pages.
-# feat/cicd-pipeline replaces the single deploy with the test→staging→prod
-# promotion pipeline (build-once-promote, smoke gates between environments).
+# CI/CD: verify on every push/PR; merges to main automatically walk
+# test → staging → production with smoke gates between each hop (ADR-018).
+#
+# Build-once-promote: verify builds ONE artifact (relative base makes it
+# path-agnostic) and every environment deploys that same artifact. The only
+# mutation is non-prod installability neutralization (manifest removed) —
+# only production may be installed as a PWA (ADR-002/018).
 name: CI
 
 on:
@@ -9,10 +13,13 @@ on:
   pull_request:
   workflow_dispatch:
 
-# The deploy job pushes to the gh-pages branch; the default GITHUB_TOKEN is
-# read-only unless widened here.
+# Deploy jobs push to the gh-pages branch; the default GITHUB_TOKEN is
+# read-only unless widened.
 permissions:
   contents: write
+
+env:
+  PAGES_BASE: https://itsord.github.io/fah-thai/
 
 jobs:
   verify:
@@ -28,20 +35,110 @@ jobs:
       - run: pnpm check
       - run: pnpm test
       - run: pnpm build
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium webkit
+      - name: E2E against built artifact (vite preview)
+        run: pnpm test:e2e
       - uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
           retention-days: 7
 
-  deploy:
-    # Placeholder single-environment deploy; becomes the 3-env promotion in
-    # feat/cicd-pipeline.
+  deploy-test:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: verify
     runs-on: ubuntu-latest
     concurrency:
-      group: gh-pages-deploy # serialize all pushes to the gh-pages branch
+      group: gh-pages-deploy # all gh-pages pushes serialize; parallel runs race the branch
+      cancel-in-progress: false
+    environment:
+      name: test
+      url: https://itsord.github.io/fah-thai/test/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Neutralize installability (non-prod)
+        run: rm -f dist/manifest.webmanifest
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages
+          target-folder: test
+          clean: true
+
+  smoke-test:
+    needs: deploy-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Wait for Pages propagation
+        run: pnpm exec tsx pipeline/wait-for-deploy.ts --url "${PAGES_BASE}test/" --sha "${{ github.sha }}"
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Smoke vs test environment
+        env:
+          SMOKE_BASE_URL: https://itsord.github.io/fah-thai/test/
+          EXPECT_INSTALLABLE: '0'
+        run: pnpm exec playwright test --project=chromium
+
+  deploy-staging:
+    needs: smoke-test
+    runs-on: ubuntu-latest
+    concurrency:
+      group: gh-pages-deploy
+      cancel-in-progress: false
+    environment:
+      name: staging
+      url: https://itsord.github.io/fah-thai/staging/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Neutralize installability (non-prod)
+        run: rm -f dist/manifest.webmanifest
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages
+          target-folder: staging
+          clean: true
+
+  smoke-staging:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Wait for Pages propagation
+        run: pnpm exec tsx pipeline/wait-for-deploy.ts --url "${PAGES_BASE}staging/" --sha "${{ github.sha }}"
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Smoke vs staging environment
+        env:
+          SMOKE_BASE_URL: https://itsord.github.io/fah-thai/staging/
+          EXPECT_INSTALLABLE: '0'
+        run: pnpm exec playwright test --project=chromium
+
+  deploy-production:
+    needs: smoke-staging
+    runs-on: ubuntu-latest
+    concurrency:
+      group: gh-pages-deploy
       cancel-in-progress: false
     environment:
       name: production
@@ -57,3 +154,27 @@ jobs:
           folder: dist
           branch: gh-pages
           clean: true
+          # Cleaning the site root must never delete the other environments.
+          clean-exclude: |
+            test
+            staging
+
+  smoke-production:
+    needs: deploy-production
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Wait for Pages propagation
+        run: pnpm exec tsx pipeline/wait-for-deploy.ts --url "$PAGES_BASE" --sha "${{ github.sha }}"
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Smoke vs production
+        env:
+          SMOKE_BASE_URL: https://itsord.github.io/fah-thai/
+          EXPECT_INSTALLABLE: '1'
+        run: pnpm exec playwright test --project=chromium

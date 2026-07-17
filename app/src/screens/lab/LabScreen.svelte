@@ -17,8 +17,14 @@
     }
   }
 
+  /**
+   * Runs only non-interactive probes. iOS grants ONE transient user
+   * activation per tap — chaining permission-consuming probes behind a
+   * single tap made later ones fail silently (measured, phase 1). The
+   * interactive probes require their own taps by design.
+   */
   async function runAll(): Promise<void> {
-    for (const probe of PROBES) {
+    for (const probe of PROBES.filter((p) => !p.interactive)) {
       await runProbe(probe.id);
     }
   }
@@ -43,14 +49,16 @@
   <header>
     <h1>Device Lab</h1>
     <p>
-      Hardware probes for the APIs this app bets on. Run each (some prompt for
-      permissions), then <strong>Copy report</strong> and paste it back into
-      the build session. Run once in Safari and once from the installed icon.
+      Hardware probes for the APIs this app bets on. <strong>Run all</strong>
+      covers the automatic ones; probes marked <em>tap</em> each need their own
+      tap (iOS allows one permission-prompt per gesture). Then
+      <strong>Copy report</strong> and paste it back into the build session.
+      Run once in Safari and once from the installed icon.
     </p>
   </header>
 
   <div class="actions">
-    <button class="primary" onclick={runAll} disabled={running !== null}>Run all</button>
+    <button class="primary" onclick={runAll} disabled={running !== null}>Run all (auto)</button>
     <button class="primary" class:copied onclick={copyReport}>
       {copied ? 'Copied ✓' : 'Copy report'}
     </button>

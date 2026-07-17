@@ -49,11 +49,24 @@ const micProbe: Probe = {
         `settings: echoCancellation=${String(s.echoCancellation)} noiseSuppression=${String(s.noiseSuppression)} autoGainControl=${String(s.autoGainControl)}`,
       );
       lines.push(`sampleRate=${String(s.sampleRate ?? '?')} channelCount=${String(s.channelCount ?? '?')}`);
-      const honoured =
-        s.echoCancellation === false && s.noiseSuppression === false && s.autoGainControl === false;
-      lines.push(honoured ? 'raw constraints HONOURED' : 'raw constraints IGNORED (processing still on)');
+      // iOS honours echoCancellation (the constraint that protects F0) but
+      // does not expose NS/AGC via getSettings — that's expected platform
+      // behavior, not a failure (ADR-003). Grade informationally.
+      const ecOff = s.echoCancellation === false;
+      lines.push(
+        ecOff
+          ? 'echoCancellation OFF (the one that matters for pitch) ✓'
+          : 'echoCancellation still ON — pitch accuracy at risk',
+      );
+      const unexposed = [
+        s.noiseSuppression === undefined ? 'noiseSuppression' : null,
+        s.autoGainControl === undefined ? 'autoGainControl' : null,
+      ].filter(Boolean);
+      if (unexposed.length > 0) {
+        lines.push(`${unexposed.join('/')} unexposed by this platform (expected on iOS)`);
+      }
       for (const t of stream.getTracks()) t.stop();
-      return { ok: honoured, lines };
+      return { ok: ecOff ? null : false, lines };
     } catch (err) {
       return fail(lines, err);
     }
@@ -202,6 +215,10 @@ const pushProbe: Probe = {
     if ('serviceWorker' in navigator) {
       const reg = await navigator.serviceWorker.getRegistration();
       lines.push(`sw: ${reg ? `registered, scope=${reg.scope}` : 'none'}`);
+      // A broader-scope SW (e.g. prod at the site root) legally controls
+      // subpath pages until their own registration lands — the nested-scope
+      // situation ADR-002's scope-derived cache names exist for.
+      lines.push(`page expects scope: ${new URL('.', location.href).href}`);
     } else {
       lines.push('sw: unsupported');
     }

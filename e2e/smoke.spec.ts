@@ -36,6 +36,15 @@ test('unknown routes fall back to Today', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible();
 });
 
+test('sound lab loads the pack and opens a phoneme detail', async ({ page }) => {
+  await page.goto('#/sounds');
+  await expect(page.getByRole('heading', { name: 'Sound Lab' })).toBeVisible();
+  await page.getByRole('button', { name: /^ป\s/ }).click();
+  await expect(page.getByText('The trap:', { exact: false })).toBeVisible();
+  await expect(page.locator('figure svg').first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'EN ghost' })).toBeVisible();
+});
+
 test('device lab renders and runs a non-interactive probe', async ({ page }) => {
   await page.goto('#/lab');
   await expect(page.getByRole('heading', { name: 'Device Lab' })).toBeVisible();

@@ -6,10 +6,12 @@
   import type { RouteId } from './shell/routes';
   import ScreenScaffold from './ui/ScreenScaffold.svelte';
   import LabScreen from './screens/lab/LabScreen.svelte';
+  import SoundLabScreen from './screens/sounds/SoundLabScreen.svelte';
 
   /** Real screens; routes not present here fall back to the stub table. */
   const SCREENS: Partial<Record<RouteId, Component>> = {
     lab: LabScreen,
+    sounds: SoundLabScreen,
   };
 
   /**

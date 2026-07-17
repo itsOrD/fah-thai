@@ -9,6 +9,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+# The deploy job pushes to the gh-pages branch; the default GITHUB_TOKEN is
+# read-only unless widened here.
+permissions:
+  contents: write
+
 jobs:
   verify:
     runs-on: ubuntu-latest

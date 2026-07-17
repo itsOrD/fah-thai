@@ -36,6 +36,13 @@ test('unknown routes fall back to Today', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible();
 });
 
+test('device lab renders and runs a non-interactive probe', async ({ page }) => {
+  await page.goto('#/lab');
+  await expect(page.getByRole('heading', { name: 'Device Lab' })).toBeVisible();
+  await page.getByRole('button', { name: /Environment/ }).click();
+  await expect(page.locator('pre').first()).toContainText('ua:');
+});
+
 test('version stamp is served', async ({ request, baseURL }) => {
   const res = await request.get(new URL('version.json', baseURL).href);
   expect(res.status()).toBe(200);

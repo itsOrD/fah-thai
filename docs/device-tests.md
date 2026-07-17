@@ -52,11 +52,23 @@ the /test/ environment.
 - Mic probe graded iOS's constraint behavior as FAIL; it is expected platform
   behavior → now INFO with an honest interpretation line.
 
-## Phase 2 — Installed PWA (pending)
+## Phase 2 — Installed PWA, iPhone (iOS 18.7) · 2026-07-17
 
-After spike merge reaches production: install from
-https://itsord.github.io/fah-thai/, open `#/lab` from the icon, run all +
-interactive probes, Copy report. Key questions: `standalone=true`,
-`persist()` granted?, `PushManager`/`Notification`/`setAppBadge` present?,
-mic re-prompt behavior per launch. Gates feat/backup-push (branch 14), not
-the audio work.
+Installed from production; `standalone: media=true navigator=true` confirmed
+(milestone-1 acceptance closed).
+
+| Capability | Result | Reading |
+|---|---|---|
+| storage.persist() | **`true`** (was `false` in the Safari tab) | Home-screen installation flipped WebKit's heuristic, exactly as researched. SRS data gets the strongest protection class; backups remain mandatory (app deletion still wipes) but the nag posture can be calm, not alarmist. |
+| Push / badging | `PushManager: true`, `Notification: default` (not yet requested), `setAppBadge: true` | Web Push + badging fully available in standalone → ADR-013's zero-backend nudge design is GO. Permission request must come from a user tap in feat/backup-push onboarding. |
+| Mic / worklet / capture chain | identical to phase 1 (EC=false honoured, 48 kHz, chain live) | Audio architecture holds in standalone; no re-prompt friction reported this session. |
+| Clipboard, wake lock, preservesPitch | pass | — |
+| SW scope | matches the page's expected scope (root) | The phase-1 anomaly was the pre-registration window, as suspected. |
+
+### ChatGPT links from the installed app (2nd measurement)
+
+Identical behavior to phase 1 — and one new fact: **universal links fire
+from a real tap inside the standalone PWA** (iOS shows the "◀ Fah"
+back-chip for the app→app round trip). `?q=` delivers the prompt into a
+live thread; `/voice` still bounces to a logged-out Safari tab; `mode=voice`
+still drops the payload. ADR-004's lane design holds unchanged.

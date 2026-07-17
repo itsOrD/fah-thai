@@ -1,0 +1,22 @@
+# dependencies / build
+node_modules/
+dist/
+*.tsbuildinfo
+
+# personal mascot art pack — never committed (see docs/mascot-prompt-pack.md)
+mascot-art/
+
+# secrets & local env
+.env
+.env.*
+
+# pipeline raw downloads (fetched, never committed)
+pipeline/sources/
+
+# test artifacts
+coverage/
+playwright-report/
+test-results/
+
+# os / editor
+.DS_Store

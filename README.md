@@ -36,16 +36,20 @@ run, and public because the engineering is the second product.
   linear history), and branches are **never deleted** — each ref is a frozen
   historical artifact. `docs/retro.md` is a living retrospective of time,
   tokens, and money, updated at every merge.
-- **CI/CD**: GitHub Actions → typecheck, tests, build, then (upcoming)
-  automatic promotion of one build artifact through test → staging → prod
-  GitHub Environments on GitHub Pages, with smoke gates between each.
+- **CI/CD**: GitHub Actions → typecheck, unit tests, dual-engine E2E, build —
+  then every merge to `main` automatically promotes **one build artifact**
+  through test → staging → production GitHub Environments on GitHub Pages,
+  with propagation-aware Playwright smoke gates between each hop (ADR-018).
+  Environments: [/test/](https://itsord.github.io/fah-thai/test/) ·
+  [/staging/](https://itsord.github.io/fah-thai/staging/) ·
+  [prod](https://itsord.github.io/fah-thai/) (only prod is installable).
 
 ## Roadmap (branch = milestone)
 
 | Branch | Delivers | State |
 |---|---|---|
 | `feat/scaffold` | toolchain, neon design tokens, router + tab shell, PWA, CI seed | ✅ |
-| `feat/cicd-pipeline` | test→staging→prod promotion with smoke gates | ⏳ |
+| `feat/cicd-pipeline` | test→staging→prod promotion with smoke gates | ✅ |
 | `spike/device-lab` | on-device probes: mic, worklet, ChatGPT deep links | |
 | `feat/tone-engine` | pure Thai tone-rule engine + exhaustive tests | |
 | `feat/content-pipeline` | curation → validation → multi-voice TTS pipeline | |

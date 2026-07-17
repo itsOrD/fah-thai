@@ -18,7 +18,13 @@
    */
   const STUBS: Record<
     RouteId,
-    { title: string; thai: string; note: string; accent?: 'pink' | 'cyan' | 'saffron' }
+    {
+      title: string;
+      thai: string;
+      note: string;
+      accent?: 'pink' | 'cyan' | 'saffron';
+      link?: { href: string; label: string };
+    }
   > = {
     today: {
       title: 'Today',
@@ -78,6 +84,7 @@
       thai: 'ความคืบหน้า',
       note: 'Tone accuracy, weak sounds, streaks, and your monthly time capsules.',
       accent: 'saffron',
+      link: { href: '#/lab', label: 'Device Lab →' },
     },
     settings: {
       title: 'Settings',

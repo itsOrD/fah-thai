@@ -9,11 +9,13 @@
     thai,
     note,
     accent = 'pink',
+    link,
   }: {
     title: string;
     thai: string;
     note: string;
     accent?: 'pink' | 'cyan' | 'saffron';
+    link?: { href: string; label: string };
   } = $props();
 </script>
 
@@ -23,6 +25,9 @@
     <h2>{title}</h2>
   </header>
   <p class="note">{note}</p>
+  {#if link}
+    <a class="stub-link" href={link.href}>{link.label}</a>
+  {/if}
   <p class="soon">under construction · Fah is supervising</p>
 </section>
 
@@ -74,5 +79,15 @@
     font-size: var(--text-xs);
     letter-spacing: 0.08em;
     text-transform: uppercase;
+  }
+
+  .stub-link {
+    color: var(--neon-cyan);
+    text-shadow: var(--glow-text-cyan);
+    text-decoration: none;
+    font-weight: 500;
+    padding: var(--sp-2) var(--sp-4);
+    border: 1px solid var(--edge-strong);
+    border-radius: var(--radius-pill);
   }
 </style>
